@@ -70,7 +70,7 @@ class AzListView extends StatefulWidget {
   final IndexHintBuilder? indexHintBuilder;
 
   /// Index data.
-  final List<String> indexBarData;
+  final List<IIndexBean> indexBarData;
 
   /// IndexBar Width.
   final double indexBarWidth;
@@ -151,7 +151,7 @@ class _AzListViewState extends State<AzListView> {
 
   void _valueChanged() {
     IndexBarDragDetails details = dragListener.dragDetails.value;
-    String tag = details.tag!;
+    String tag = details.indexBean!.getTag();
     if (details.action == IndexBarDragDetails.actionDown ||
         details.action == IndexBarDragDetails.actionUpdate) {
       selectTag = tag;

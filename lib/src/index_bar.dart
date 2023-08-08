@@ -6,8 +6,25 @@ import 'dart:math' as math;
 
 import 'package:flutter/services.dart';
 
+/// IIndexBean Bean.
+abstract class IIndexBean {
+  String getTag(); //Tag
+  String getDisplay(); //Display
+}
+
+/// BaseIndexBean
+class BaseIndexBean implements IIndexBean {
+  final String tag;
+  final String display;
+
+  const BaseIndexBean(this.tag, this.display);
+
+  String getTag() => tag;
+  String getDisplay() => display;
+}
+
 /// IndexHintBuilder.
-typedef IndexHintBuilder = Widget Function(BuildContext context, String tag);
+typedef IndexHintBuilder = Widget Function(BuildContext context, IIndexBean indexBean);
 
 /// IndexBarDragListener.
 abstract class IndexBarDragListener {
@@ -36,7 +53,7 @@ class IndexBarDragDetails {
 
   int? action;
   int? index; //current touch index.
-  String? tag; //current touch tag.
+  IIndexBean? indexBean; //current touch bean.
 
   double? localPositionY;
   double? globalPositionY;
@@ -44,41 +61,41 @@ class IndexBarDragDetails {
   IndexBarDragDetails({
     this.action,
     this.index,
-    this.tag,
+    this.indexBean,
     this.localPositionY,
     this.globalPositionY,
   });
 }
 
 ///Default Index data.
-const List<String> kIndexBarData = const [
-  'A',
-  'B',
-  'C',
-  'D',
-  'E',
-  'F',
-  'G',
-  'H',
-  'I',
-  'J',
-  'K',
-  'L',
-  'M',
-  'N',
-  'O',
-  'P',
-  'Q',
-  'R',
-  'S',
-  'T',
-  'U',
-  'V',
-  'W',
-  'X',
-  'Y',
-  'Z',
-  '#'
+const List<IIndexBean> kIndexBarData = const [
+  BaseIndexBean('A','A'),
+  BaseIndexBean('B','B'),
+  BaseIndexBean('C','C'),
+  BaseIndexBean('D','D'),
+  BaseIndexBean('E','E'),
+  BaseIndexBean('F','F'),
+  BaseIndexBean('G','G'),
+  BaseIndexBean('H','H'),
+  BaseIndexBean('I','I'),
+  BaseIndexBean('J','J'),
+  BaseIndexBean('K','K'),
+  BaseIndexBean('L','L'),
+  BaseIndexBean('M','M'),
+  BaseIndexBean('N','N'),
+  BaseIndexBean('O','O'),
+  BaseIndexBean('P','P'),
+  BaseIndexBean('Q','Q'),
+  BaseIndexBean('R','R'),
+  BaseIndexBean('S','S'),
+  BaseIndexBean('T','T'),
+  BaseIndexBean('U','U'),
+  BaseIndexBean('V','V'),
+  BaseIndexBean('W','W'),
+  BaseIndexBean('X','X'),
+  BaseIndexBean('Y','Y'),
+  BaseIndexBean('Z','Z'),
+  BaseIndexBean('#','#'),
 ];
 
 const double kIndexBarWidth = 30;
@@ -238,7 +255,7 @@ class IndexBar extends StatefulWidget {
         super(key: key);
 
   /// Index data.
-  final List<String> data;
+  final List<IIndexBean> data;
 
   /// IndexBar width(def:30).
   final double width;
@@ -273,7 +290,7 @@ class _IndexBarState extends State<IndexBar> {
   static OverlayEntry? overlayEntry;
 
   double floatTop = 0;
-  String indexTag = '';
+  // String indexTag = '';
   int selectIndex = 0;
   int action = IndexBarDragDetails.actionEnd;
 
@@ -289,7 +306,7 @@ class _IndexBarState extends State<IndexBar> {
     IndexBarDragDetails details =
         widget.indexBarDragNotifier!.dragDetails.value;
     selectIndex = details.index!;
-    indexTag = details.tag!;
+    // indexTag = details.indexBean!.getTag();
     action = details.action!;
     floatTop = details.globalPositionY! +
         widget.itemHeight / 2 -
@@ -323,22 +340,22 @@ class _IndexBarState extends State<IndexBar> {
     super.dispose();
   }
 
-  Widget _buildIndexHint(BuildContext context, String tag) {
+  Widget _buildIndexHint(BuildContext context, IIndexBean indexBean) {
     if (widget.indexHintBuilder != null) {
-      return widget.indexHintBuilder!(context, tag);
+      return widget.indexHintBuilder!(context, indexBean);
     }
     Widget child;
     TextStyle textStyle = widget.options.indexHintTextStyle;
     List<String> localImages = widget.options.localImages;
-    if (localImages.contains(tag)) {
+    if (localImages.contains(indexBean.getTag())) {
       child = Image.asset(
-        tag,
+        indexBean.getTag(),
         width: textStyle.fontSize,
         height: textStyle.fontSize,
         color: textStyle.color,
       );
     } else {
-      child = Text('$tag', style: textStyle);
+      child = Text(indexBean.getDisplay(), style: textStyle);
     }
     return Container(
       width: widget.options.indexHintWidth,
@@ -385,7 +402,7 @@ class _IndexBarState extends State<IndexBar> {
             top: top,
             child: Material(
               color: Colors.transparent,
-              child: _buildIndexHint(ctx, indexTag),
+              child: _buildIndexHint(ctx, widget.data[selectIndex]),
             ));
       });
       overlayState.insert(overlayEntry!);
@@ -402,7 +419,7 @@ class _IndexBarState extends State<IndexBar> {
   }
 
   Widget _buildItem(BuildContext context, int index) {
-    String tag = widget.data[index];
+    IIndexBean indexBean = widget.data[index];
     Decoration? decoration;
     TextStyle? textStyle;
     if (widget.options.downItemDecoration != null) {
@@ -426,15 +443,15 @@ class _IndexBarState extends State<IndexBar> {
 
     Widget child;
     List<String> localImages = widget.options.localImages;
-    if (localImages.contains(tag)) {
+    if (localImages.contains(indexBean.getTag())) {
       child = Image.asset(
-        tag,
+        indexBean.getTag(),
         width: textStyle?.fontSize,
         height: textStyle?.fontSize,
         color: textStyle?.color,
       );
     } else {
-      child = Text('$tag', style: textStyle);
+      child = Text(indexBean.getDisplay(), style: textStyle);
     }
 
     return Container(
@@ -446,7 +463,7 @@ class _IndexBarState extends State<IndexBar> {
 
   void _updateTagIndex(String tag) {
     if (_isActionDown()) return;
-    selectIndex = widget.data.indexOf(tag);
+    selectIndex = widget.data.indexWhere((element) => element.getTag() == tag);
     setState(() {});
   }
 
@@ -488,7 +505,7 @@ class BaseIndexBar extends StatefulWidget {
   }) : super(key: key);
 
   /// index data.
-  final List<String> data;
+  final List<IIndexBean> data;
 
   /// IndexBar width(def:30).
   final double width;
@@ -530,7 +547,7 @@ class _BaseIndexBarState extends State<BaseIndexBar> {
     widget.indexBarDragNotifier?.dragDetails?.value = IndexBarDragDetails(
       action: action,
       index: lastIndex,
-      tag: widget.data[lastIndex],
+      indexBean: widget.data[lastIndex],
       localPositionY: lastIndex * widget.itemHeight,
       globalPositionY: lastIndex * widget.itemHeight + _widgetTop,
     );
